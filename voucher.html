@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ambil Voucher FIX NET</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     * {
       margin: 0;
@@ -65,10 +66,16 @@
       font-weight: normal;
       margin-bottom: 2px;
     }
-    button {
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
       margin-top: 8px;
+    }
+    button {
       padding: 10px 20px;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: bold;
       background: #667eea;
       color: white;
@@ -76,8 +83,6 @@
       border-radius: 10px;
       cursor: pointer;
       transition: all 0.3s ease;
-      width: 90%;
-      max-width: 250px;
     }
     button:hover {
       background: #764ba2;
@@ -87,6 +92,19 @@
     button:active {
       transform: scale(0.98);
     }
+    .btn-primary {
+      width: 90%;
+      max-width: 250px;
+      font-size: 16px;
+    }
+    .btn-share {
+      background: #25D366;
+      font-size: 14px;
+      padding: 8px 16px;
+    }
+    .btn-share:hover {
+      background: #20BA5A;
+    }
   </style>
 </head>
 <body>
@@ -95,9 +113,16 @@
     <div class="voucher-amount">Voucher 50 Ribu</div>
     <div class="info">Klik dibawah</div>
   </div>
-  <button onclick="ambil()">Ambil Voucher</button>
+  <button class="btn-primary" onclick="ambil()">Ambil Voucher</button>
+  <div id="shareContainer" style="display: none; margin-top: 10px;">
+    <div class="button-group">
+      <button class="btn-share" onclick="shareVoucher()">📱 Bagikan</button>
+    </div>
+  </div>
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbyudyaXZBqEI5ia-7oicFttecj_4-lvs5jfCBW1yPXMWEaOiNb8p8qimzribAOpCsJX/exec';
+    let cardElement = null;
+    
     async function ambil() {
       const card = document.getElementById('card');
       const infoDiv = card.querySelector('.info');
@@ -112,6 +137,7 @@
             '<div class="subtitle">FIX Net Sebatuk</div>' +
             '<div class="info" style="color: red; font-weight: bold; font-size: 14px; margin: 5px 0;">Voucher habis</div>' +
             '<div class="info">Ditampilkan:<br><strong style="font-size:13px;">' + (data.today_count || 0) + '</strong></div>';
+          document.getElementById('shareContainer').style.display = 'none';
           return;
         }
         const waktu = new Date(data.used_at);
@@ -122,10 +148,41 @@
           '<div class="info"><label>User:</label><strong style="font-size:15px;">' + data.user + '</strong></div>' +
           '<div class="info"><label>Paswd:</label><strong style="font-size:15px;">' + data.pass + '</strong></div>' +
           '<div class="info"><label>Waktu:</label><strong style="font-size:12px;">' + timeStr + '</strong></div>';
+        cardElement = {user: data.user, pass: data.pass, time: timeStr};
+        document.getElementById('shareContainer').style.display = 'block';
       } catch (e) {
         if (infoDiv) {
           infoDiv.textContent = 'Error';
         }
+        document.getElementById('shareContainer').style.display = 'none';
+      }
+    }
+    
+    async function shareVoucher() {
+      if (!cardElement) return;
+      
+      try {
+        const canvas = await html2canvas(document.getElementById('card'), {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          logging: false
+        });
+        
+        canvas.toBlob(function(blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'voucher_fix_net.png';
+          link.click();
+          URL.revokeObjectURL(url);
+          
+          setTimeout(() => {
+            const whatsappUrl = 'https://wa.me/?text=Voucher%20FIX%20NET%2050%20Ribu';
+            window.open(whatsappUrl, '_blank');
+          }, 500);
+        });
+      } catch (err) {
+        alert('Gagal membuat gambar. Silakan coba lagi.');
       }
     }
   </script>
