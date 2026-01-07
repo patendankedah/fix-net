@@ -96,7 +96,7 @@
       width: 90%;
       max-width: 250px;
       font-size: 16px;
-       margin-top: 20px;
+      margin-top: 20px;
     }
     .btn-share {
       background: #25D366;
@@ -114,21 +114,42 @@
     <div class="voucher-amount">Voucher 50 Ribu</div>
     <div class="info">Klik dibawah</div>
   </div>
-   <div id="todayCount" style="margin-top: 15px; font-size: 14px; color: #333; text-align: center;">Diambil hari ini: <strong id="countDisplay">0</strong></div>
+
+  <div id="todayCount" style="margin-top: 15px; font-size: 14px; color: #333; text-align: center;">
+    Diambil hari ini: <strong id="countDisplay">0</strong>
+  </div>
+
   <button class="btn-primary" onclick="ambil()">Ambil Voucher</button>
+
   <script>
     const API_URL = 'https://script.google.com/macros/s/AKfycbyudyaXZBqEI5ia-7oicFttecj_4-lvs5jfCBW1yPXMWEaOiNb8p8qimzribAOpCsJX/exec';
+    const VOUCHER_PIN = '1234'; // GANTI PIN DI SINI
+
     let cardElement = null;
     
     async function ambil() {
+      // 1. Minta PIN dulu
+      const inputPin = prompt('Masukkan PIN untuk ambil voucher:');
+      if (inputPin === null) {
+        // User menekan Cancel
+        return;
+      }
+      if (inputPin !== VOUCHER_PIN) {
+        alert('PIN salah!');
+        return;
+      }
+
+      // 2. Jika PIN benar, lanjut ambil voucher dari API
       const card = document.getElementById('card');
       const infoDiv = card.querySelector('.info');
       if (infoDiv) {
         infoDiv.textContent = 'Loading...';
       }
+
       try {
         const res = await fetch(API_URL);
         const data = await res.json();
+
         if (data.status === 'empty') {
           card.innerHTML =
             '<div class="subtitle">FIX Net Sebatuk</div>' +
@@ -136,16 +157,25 @@
             '<div class="info">Ditampilkan:<br><strong style="font-size:13px;">' + (data.today_count || 0) + '</strong></div>';
           return;
         }
+
         const waktu = new Date(data.used_at);
-        const timeStr = waktu.toLocaleString('id-ID', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'});
+        const timeStr = waktu.toLocaleString('id-ID', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
         card.innerHTML =
           '<div class="subtitle">FIX Net Sebatuk</div>' +
           '<div class="voucher-amount" style="font-size:15px;">Voucher 50 Ribu</div>' +
           '<div class="info"><label>User:</label><strong style="font-size:15px;">' + data.user + '</strong></div>' +
           '<div class="info"><label>Paswd:</label><strong style="font-size:15px;">' + data.pass + '</strong></div>' +
           '<div class="info"><label>Waktu:</label><strong style="font-size:12px;">' + timeStr + '</strong></div>';
-        cardElement = {user: data.user, pass: data.pass, time: timeStr};
-         document.getElementById('countDisplay').textContent = data.today_count || 0;
+
+        cardElement = { user: data.user, pass: data.pass, time: timeStr };
+        document.getElementById('countDisplay').textContent = data.today_count || 0;
       } catch (e) {
         if (infoDiv) {
           infoDiv.textContent = 'Error';
